@@ -1,6 +1,5 @@
 /.project
 /.settings/
-/node_modules/
+node_modules/
 /creds.data
 /gactions
-/functions/node_modules/
