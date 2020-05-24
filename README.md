@@ -1,4 +1,5 @@
 # openHAB Google Assistant
+[![Build Status](https://travis-ci.org/jasonxh/smartthings-mqtt-bridge.svg?branch=master)](https://travis-ci.org/jasonxh/smartthings-mqtt-bridge)
 
 openHAB Google Assistant is based on [Google Cloud Function](https://cloud.google.com/functions) powered by Firebase and realized by Node.js. This serverless application connects the Google Assistant platform with the users openHAB instance through the openHAB Cloud service and lets the user control IoT devices through the Google Assistant. The openHAB Smart Home app lets you connect, query, and control devices through openHAB Cloud infrastructure.
 
