@@ -1,0 +1,41 @@
+language: minimal
+dist: bionic
+
+services:
+- docker
+
+branches:
+  only:
+  - master
+
+env:
+- ARCH=amd64
+- ARCH=arm32v7
+- ARCH=arm64v8
+
+install:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+- docker build --build-arg ARCH=$ARCH -f Dockerfile.multiarch -t $TRAVIS_REPO_SLUG:latest-$ARCH .
+- '[ "$TRAVIS_EVENT_TYPE" != push ] || docker push $TRAVIS_REPO_SLUG:latest-$ARCH'
+
+script: skip
+
+jobs:
+  include:
+  - stage: manifest
+    if: type = push
+    env:
+    - DOCKER_CLI_EXPERIMENTAL=enabled
+    install:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - |-
+      docker manifest create $TRAVIS_REPO_SLUG:latest \
+        $TRAVIS_REPO_SLUG:latest-amd64 \
+        $TRAVIS_REPO_SLUG:latest-arm32v7 \
+        $TRAVIS_REPO_SLUG:latest-arm64v8
+    - docker manifest annotate $TRAVIS_REPO_SLUG:latest $TRAVIS_REPO_SLUG:latest-amd64 --os linux --arch amd64
+    - docker manifest annotate $TRAVIS_REPO_SLUG:latest $TRAVIS_REPO_SLUG:latest-arm32v7 --os linux --arch arm --variant v7
+    - docker manifest annotate $TRAVIS_REPO_SLUG:latest $TRAVIS_REPO_SLUG:latest-arm64v8 --os linux --arch arm64 --variant v8
+    - docker manifest push $TRAVIS_REPO_SLUG:latest
+    script: skip
