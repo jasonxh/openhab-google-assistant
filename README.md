@@ -1,5 +1,63 @@
-# openHAB Google Assistant
+# About This Fork
 [![Build Status](https://travis-ci.org/jasonxh/smartthings-mqtt-bridge.svg?branch=master)](https://travis-ci.org/jasonxh/smartthings-mqtt-bridge)
+
+This fork makes it easy to run the Google Assistant functions locally, as opposed to deploying them to Google Cloud Functions.
+If your experience with Google Cloud Functions has been rock solid, there's no benefit to switch.
+However, if you are like me, who regularly experiences long pauses between asking Google Assistant and the actions getting triggered, this may help with that.
+
+You can skip the step below about deploying your [Google Cloud Function](#google-cloud-functions).
+You will still need to follow the instructions to [setup account linking](#actions-on-google) and [deploy your action](#deploy-your-action).
+When asked to fill in your `Fulfillment URL`, put in your server URL instead of the Google Cloud Function URL.
+
+## Run with docker (recommended)
+This repo is setup to build and publish docker images to [Docker Hub](https://hub.docker.com/repository/docker/jasonxh/openhab-google-assistant), with arch support for `amd64`, `arm32v7`, `arm64v8`. 
+
+To get help on command line arguments:
+
+```bash
+docker run --rm -it jasonxh/openhab-google-assistant --help
+
+> openhab.google-assistant-smarthome@2.0.22 start /openhab-google-assistant
+> node server.js "--help"
+
+Options:
+  --version      Show version number                                   [boolean]
+  --oh-host, -h  openHAB Cloud host                          [string] [required]
+  --oh-port      openHAB Cloud port                      [number] [default: 443]
+  --oh-path      openHAB Cloud path           [string] [default: "/rest/items/"]
+  --port         Local listening port                   [number] [default: 3000]
+  --help         Show help                                             [boolean]
+```
+
+The only required argument is `--oh-host` (or `-h` for short), which specifies your openHAB Cloud domain name.
+For example:
+
+```bash
+docker run --rm -it -p3000:3000 jasonxh/openhab-google-assistant --oh-host openhabcloud.mydomain.com
+
+> openhab.google-assistant-smarthome@2.0.22 start /openhab-google-assistant
+> node server.js "--oh-host" "openhabcloud.mydomain.com"
+
+Server is listening on port 3000
+```
+
+### Secure Your Server
+The server is not secured out of the box.
+Measures must be taken to secure it with a reverse proxy like [Traefik](https://docs.traefik.io/) or [nginx](https://nginx.org/en/), with a valid TLS certificate.
+The included [docker-compose.yml](docker-compose.yml) file shows an example of how to do it with Traefik and Let's Encrypt.
+You may directly use it to run your server (make sure to replace the `<PLACEHOLDERS>`), or integrate into an existing cluster of services your are already running, e.g. your openHAB Cloud instance (see [here](https://github.com/jasonxh/openhab-cloud/blob/master/deployment/docker-compose/docker-compose.yml) for an example).
+
+## Run with npm
+Make sure you have nodejs 10+ installed.
+
+```bash
+npm install
+npm start -- --oh-host openhabcloud.mydomain.com
+```
+
+See above for additional command line arguments.
+
+# openHAB Google Assistant
 
 openHAB Google Assistant is based on [Google Cloud Function](https://cloud.google.com/functions) powered by Firebase and realized by Node.js. This serverless application connects the Google Assistant platform with the users openHAB instance through the openHAB Cloud service and lets the user control IoT devices through the Google Assistant. The openHAB Smart Home app lets you connect, query, and control devices through openHAB Cloud infrastructure.
 

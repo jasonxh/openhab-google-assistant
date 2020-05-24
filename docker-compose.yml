@@ -1,10 +1,42 @@
 version: "3"
 
 services:
-  app:
+  ga:
     image: jasonxh/openhab-google-assistant
     build: .
-    command: [ "--oh-host", "YOUR_OPENHAB_CLOUD_HOST" ]
-    ports:
-      - "3000:3000"
+    command: [ "--oh-host", "<YOUR_OPENHAB_CLOUD_HOST>" ]
     restart: always
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ga.entrypoints: websecure
+      traefik.http.routers.ga.rule: PathPrefix(`/`)
+      traefik.http.services.ga.loadbalancer.server.port: "3000"
+
+  traefik:
+    image: traefik:v2.2
+    restart: always
+    command:
+      - --api.insecure
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=leresolver
+      - --entrypoints.websecure.http.tls.domains[0].main=<YOUR_SERVER_DOMAIN_NAME>
+      - --certificatesresolvers.leresolver.acme.email=<YOUR_EMAIL>
+      - --certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.leresolver.acme.storage=/data/acme.json
+
+      # use staging server for testing
+      #- --certificatesresolvers.leresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      #- --log.level=DEBUG
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - traefik:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  traefik:

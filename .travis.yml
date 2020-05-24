@@ -1,30 +1,43 @@
-language: minimal
+language: node_js
+node_js: 10
 dist: bionic
-
-services:
-- docker
 
 branches:
   only:
   - master
 
-env:
-- ARCH=amd64
-- ARCH=arm32v7
-- ARCH=arm64v8
-
-install:
-- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-- docker build --build-arg ARCH=$ARCH -f Dockerfile.multiarch -t $TRAVIS_REPO_SLUG:latest-$ARCH .
-- '[ "$TRAVIS_EVENT_TYPE" != push ] || docker push $TRAVIS_REPO_SLUG:latest-$ARCH'
-
-script: skip
+_build_job: &build_job
+  services:
+  - docker
+  install:
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - docker build --build-arg ARCH=$ARCH -f Dockerfile.multiarch -t $TRAVIS_REPO_SLUG:latest-$ARCH .
+  - |-
+    if [ "$TRAVIS_EVENT_TYPE" = push ]; then
+      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      docker push $TRAVIS_REPO_SLUG:latest-$ARCH
+    fi
+  script: skip
 
 jobs:
   include:
-  - stage: manifest
+  - stage: test
+
+  - stage: docker_build
+    <<: *build_job
+    env:
+    - ARCH=amd64
+  - <<: *build_job
+    env:
+    - ARCH=arm32v7
+  - <<: *build_job
+    env:
+    - ARCH=arm64v8
+
+  - stage: docker_manifest
     if: type = push
+    services:
+    - docker
     env:
     - DOCKER_CLI_EXPERIMENTAL=enabled
     install:
